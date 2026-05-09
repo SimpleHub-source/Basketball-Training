@@ -1,638 +1,277 @@
--- Simple Hub v3.0
--- Mobile Friendly | Delta Executor
+-- Simple Hub | Rayfield Edition
+-- Basketball Training Script
+
+local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
-local TweenService = game:GetService("TweenService")
 
 local Player = Players.LocalPlayer
 local Events = ReplicatedStorage:WaitForChild("Events")
 local RequestServerAction = Events:WaitForChild("RequestServerAction")
 local InvokeServerAction = Events:WaitForChild("InvokeServerAction")
 
--- Toggles
 local Toggles = {
-    cash      = false,
-    train     = false,
-    rebirth   = false,
-    hatch     = false,
-    playrwd   = false,
-    spin      = false,
-    eggrwd    = false,
-    equip     = false,
-    gold      = false,
+    cash=false, train=false, rebirth=false,
+    hatch=false, playrwd=false, spin=false,
+    eggrwd=false, equip=false, gold=false,
 }
 local Connections = {}
 
--- ══════════════════════════════════════════════════
--- SCREEN GUI
--- ══════════════════════════════════════════════════
-local Gui = Instance.new("ScreenGui")
-Gui.Name = "SimpleHub"
-Gui.ResetOnSpawn = false
-Gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-Gui.Parent = Player.PlayerGui
+-- Window
+local Window = Rayfield:CreateWindow({
+    Name = "Simple Hub",
+    LoadingTitle = "Simple Hub",
+    LoadingSubtitle = "Basketball Training Script",
+    ConfigurationSaving = { Enabled = false },
+    Discord = { Enabled = false },
+    KeySystem = false,
+})
 
--- ══════════════════════════════════════════════════
--- LOADING SCREEN
--- ══════════════════════════════════════════════════
-local LoadFrame = Instance.new("Frame")
-LoadFrame.Size = UDim2.new(1, 0, 1, 0)
-LoadFrame.BackgroundColor3 = Color3.fromRGB(8, 8, 18)
-LoadFrame.BorderSizePixel = 0
-LoadFrame.ZIndex = 100
-LoadFrame.Parent = Gui
+-- ══════════════════════════
+-- TAB: GENERAL
+-- ══════════════════════════
+local GeneralTab = Window:CreateTab("General", "star")
 
-local LoadTitle = Instance.new("TextLabel")
-LoadTitle.Size = UDim2.new(1, 0, 0, 60)
-LoadTitle.Position = UDim2.new(0, 0, 0.38, 0)
-LoadTitle.BackgroundTransparency = 1
-LoadTitle.Text = "Simple Hub"
-LoadTitle.TextColor3 = Color3.fromRGB(255, 140, 0)
-LoadTitle.TextSize = 36
-LoadTitle.Font = Enum.Font.GothamBold
-LoadTitle.ZIndex = 101
-LoadTitle.Parent = LoadFrame
+GeneralTab:CreateSection("Training")
 
-local LoadSub = Instance.new("TextLabel")
-LoadSub.Size = UDim2.new(1, 0, 0, 30)
-LoadSub.Position = UDim2.new(0, 0, 0.52, 0)
-LoadSub.BackgroundTransparency = 1
-LoadSub.Text = "Basketball Training Script"
-LoadSub.TextColor3 = Color3.fromRGB(180, 180, 180)
-LoadSub.TextSize = 14
-LoadSub.Font = Enum.Font.Gotham
-LoadSub.ZIndex = 101
-LoadSub.Parent = LoadFrame
-
--- Loading Bar Track
-local BarTrack = Instance.new("Frame")
-BarTrack.Size = UDim2.new(0, 220, 0, 6)
-BarTrack.Position = UDim2.new(0.5, -110, 0.62, 0)
-BarTrack.BackgroundColor3 = Color3.fromRGB(30, 30, 50)
-BarTrack.BorderSizePixel = 0
-BarTrack.ZIndex = 101
-BarTrack.Parent = LoadFrame
-
-local BarCorner = Instance.new("UICorner")
-BarCorner.CornerRadius = UDim.new(1, 0)
-BarCorner.Parent = BarTrack
-
-local BarFill = Instance.new("Frame")
-BarFill.Size = UDim2.new(0, 0, 1, 0)
-BarFill.BackgroundColor3 = Color3.fromRGB(255, 140, 0)
-BarFill.BorderSizePixel = 0
-BarFill.ZIndex = 102
-BarFill.Parent = BarTrack
-
-local BarFillCorner = Instance.new("UICorner")
-BarFillCorner.CornerRadius = UDim.new(1, 0)
-BarFillCorner.Parent = BarFill
-
-local LoadStatus = Instance.new("TextLabel")
-LoadStatus.Size = UDim2.new(1, 0, 0, 24)
-LoadStatus.Position = UDim2.new(0, 0, 0.67, 0)
-LoadStatus.BackgroundTransparency = 1
-LoadStatus.Text = "Loading..."
-LoadStatus.TextColor3 = Color3.fromRGB(120, 120, 160)
-LoadStatus.TextSize = 12
-LoadStatus.Font = Enum.Font.Gotham
-LoadStatus.ZIndex = 101
-LoadStatus.Parent = LoadFrame
-
--- Animate loading bar
-local loadSteps = {
-    {0.2, "Connecting to server..."},
-    {0.45, "Loading modules..."},
-    {0.70, "Setting up GUI..."},
-    {0.90, "Almost done..."},
-    {1.0, "Done!"},
-}
-for _, step in ipairs(loadSteps) do
-    TweenService:Create(BarFill, TweenInfo.new(0.4), {
-        Size = UDim2.new(step[1], 0, 1, 0)
-    }):Play()
-    LoadStatus.Text = step[2]
-    task.wait(0.45)
-end
-task.wait(0.3)
-TweenService:Create(LoadFrame, TweenInfo.new(0.5), {BackgroundTransparency = 1}):Play()
-for _, v in ipairs(LoadFrame:GetDescendants()) do
-    if v:IsA("TextLabel") or v:IsA("Frame") then
-        TweenService:Create(v, TweenInfo.new(0.4), {BackgroundTransparency = 1, TextTransparency = 1}):Play()
-    end
-end
-task.wait(0.5)
-LoadFrame:Destroy()
-
--- ══════════════════════════════════════════════════
--- DRAG BUTTON (selalu tampil)
--- ══════════════════════════════════════════════════
-local DragBtn = Instance.new("TextButton")
-DragBtn.Size = UDim2.new(0, 48, 0, 48)
-DragBtn.Position = UDim2.new(0, 8, 0.45, 0)
-DragBtn.BackgroundColor3 = Color3.fromRGB(255, 140, 0)
-DragBtn.Text = "☰"
-DragBtn.TextSize = 22
-DragBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-DragBtn.Font = Enum.Font.GothamBold
-DragBtn.BorderSizePixel = 0
-DragBtn.ZIndex = 10
-DragBtn.Parent = Gui
-
-local DragBtnCorner = Instance.new("UICorner")
-DragBtnCorner.CornerRadius = UDim.new(0, 12)
-DragBtnCorner.Parent = DragBtn
-
-local DragBtnStroke = Instance.new("UIStroke")
-DragBtnStroke.Color = Color3.fromRGB(255, 200, 80)
-DragBtnStroke.Thickness = 1.5
-DragBtnStroke.Parent = DragBtn
-
--- Make DragBtn draggable
-do
-    local dragging, dragInput, dragStart, startPos = false, nil, nil, nil
-    DragBtn.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.Touch or
-           input.UserInputType == Enum.UserInputType.MouseButton1 then
-            dragging = true
-            dragStart = input.Position
-            startPos = DragBtn.Position
-            input.Changed:Connect(function()
-                if input.UserInputState == Enum.UserInputState.End then
-                    dragging = false
+-- Instant Cash
+GeneralTab:CreateToggle({
+    Name = "💰 Instant Cash",
+    CurrentValue = false,
+    Flag = "AutoCash",
+    Callback = function(val)
+        Toggles.cash = val
+        if val then
+            Connections.cash = task.spawn(function()
+                while Toggles.cash do
+                    pcall(function()
+                        InvokeServerAction:InvokeServer("Win","Ended",1,999999,1)
+                    end)
+                    task.wait(2)
                 end
             end)
-        end
-    end)
-    DragBtn.InputChanged:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.Touch or
-           input.UserInputType == Enum.UserInputType.MouseMovement then
-            dragInput = input
-        end
-    end)
-    game:GetService("UserInputService").InputChanged:Connect(function(input)
-        if dragging and input == dragInput then
-            local delta = input.Position - dragStart
-            DragBtn.Position = UDim2.new(
-                startPos.X.Scale,
-                startPos.X.Offset + delta.X,
-                startPos.Y.Scale,
-                startPos.Y.Offset + delta.Y
-            )
-        end
-    end)
-end
-
--- ══════════════════════════════════════════════════
--- MAIN FRAME
--- ══════════════════════════════════════════════════
-local Main = Instance.new("Frame")
-Main.Size = UDim2.new(0, 280, 0, 530)
-Main.Position = UDim2.new(0, 64, 0.5, -265)
-Main.BackgroundColor3 = Color3.fromRGB(10, 10, 20)
-Main.BorderSizePixel = 0
-Main.Active = true
-Main.Draggable = true
-Main.Visible = true
-Main.Parent = Gui
-
-local MainCorner = Instance.new("UICorner")
-MainCorner.CornerRadius = UDim.new(0, 14)
-MainCorner.Parent = Main
-
-local MainStroke = Instance.new("UIStroke")
-MainStroke.Color = Color3.fromRGB(255, 140, 0)
-MainStroke.Thickness = 1.5
-MainStroke.Parent = Main
-
--- Title Bar
-local TitleBar = Instance.new("Frame")
-TitleBar.Size = UDim2.new(1, 0, 0, 46)
-TitleBar.BackgroundColor3 = Color3.fromRGB(255, 140, 0)
-TitleBar.BorderSizePixel = 0
-TitleBar.Parent = Main
-
-local TitleBarCorner = Instance.new("UICorner")
-TitleBarCorner.CornerRadius = UDim.new(0, 14)
-TitleBarCorner.Parent = TitleBar
-
-local TitleBarFix = Instance.new("Frame")
-TitleBarFix.Size = UDim2.new(1, 0, 0.5, 0)
-TitleBarFix.Position = UDim2.new(0, 0, 0.5, 0)
-TitleBarFix.BackgroundColor3 = Color3.fromRGB(255, 140, 0)
-TitleBarFix.BorderSizePixel = 0
-TitleBarFix.Parent = TitleBar
-
-local TitleLbl = Instance.new("TextLabel")
-TitleLbl.Size = UDim2.new(1, -12, 1, 0)
-TitleLbl.Position = UDim2.new(0, 12, 0, 0)
-TitleLbl.BackgroundTransparency = 1
-TitleLbl.Text = "🏀 Simple Hub"
-TitleLbl.TextColor3 = Color3.fromRGB(255, 255, 255)
-TitleLbl.TextSize = 17
-TitleLbl.Font = Enum.Font.GothamBold
-TitleLbl.TextXAlignment = Enum.TextXAlignment.Left
-TitleLbl.Parent = TitleBar
-
--- Content scroll
-local Content = Instance.new("ScrollingFrame")
-Content.Size = UDim2.new(1, -16, 1, -56)
-Content.Position = UDim2.new(0, 8, 0, 50)
-Content.BackgroundTransparency = 1
-Content.BorderSizePixel = 0
-Content.ScrollBarThickness = 3
-Content.ScrollBarImageColor3 = Color3.fromRGB(255, 140, 0)
-Content.CanvasSize = UDim2.new(0, 0, 0, 0)
-Content.AutomaticCanvasSize = Enum.AutomaticSize.Y
-Content.Parent = Main
-
-local ContentList = Instance.new("UIListLayout")
-ContentList.Padding = UDim.new(0, 7)
-ContentList.SortOrder = Enum.SortOrder.LayoutOrder
-ContentList.Parent = Content
-
--- Section Label
-local function SectionLabel(text, order)
-    local Lbl = Instance.new("TextLabel")
-    Lbl.Size = UDim2.new(1, 0, 0, 20)
-    Lbl.BackgroundTransparency = 1
-    Lbl.Text = "  " .. text
-    Lbl.TextColor3 = Color3.fromRGB(255, 140, 0)
-    Lbl.TextSize = 11
-    Lbl.Font = Enum.Font.GothamBold
-    Lbl.TextXAlignment = Enum.TextXAlignment.Left
-    Lbl.LayoutOrder = order
-    Lbl.Parent = Content
-end
-
--- ══════════════════════════════════════════════════
--- TOGGLE ROW BUILDER
--- ══════════════════════════════════════════════════
-local function CreateToggleRow(icon, label, activeColor, order)
-    local Row = Instance.new("Frame")
-    Row.Size = UDim2.new(1, 0, 0, 50)
-    Row.BackgroundColor3 = Color3.fromRGB(18, 18, 34)
-    Row.BorderSizePixel = 0
-    Row.LayoutOrder = order
-    Row.Parent = Content
-
-    local RowCorner = Instance.new("UICorner")
-    RowCorner.CornerRadius = UDim.new(0, 10)
-    RowCorner.Parent = Row
-
-    local RowStroke = Instance.new("UIStroke")
-    RowStroke.Color = Color3.fromRGB(40, 40, 65)
-    RowStroke.Thickness = 1
-    RowStroke.Parent = Row
-
-    local IconL = Instance.new("TextLabel")
-    IconL.Size = UDim2.new(0, 36, 1, 0)
-    IconL.Position = UDim2.new(0, 6, 0, 0)
-    IconL.BackgroundTransparency = 1
-    IconL.Text = icon
-    IconL.TextSize = 20
-    IconL.Font = Enum.Font.GothamBold
-    IconL.Parent = Row
-
-    local NameL = Instance.new("TextLabel")
-    NameL.Size = UDim2.new(1, -105, 1, 0)
-    NameL.Position = UDim2.new(0, 44, 0, 0)
-    NameL.BackgroundTransparency = 1
-    NameL.Text = label
-    NameL.TextColor3 = Color3.fromRGB(190, 190, 210)
-    NameL.TextSize = 13
-    NameL.Font = Enum.Font.GothamSemibold
-    NameL.TextXAlignment = Enum.TextXAlignment.Left
-    NameL.Parent = Row
-
-    -- Switch track
-    local Track = Instance.new("Frame")
-    Track.Size = UDim2.new(0, 44, 0, 22)
-    Track.Position = UDim2.new(1, -52, 0.5, -11)
-    Track.BackgroundColor3 = Color3.fromRGB(45, 45, 65)
-    Track.BorderSizePixel = 0
-    Track.Parent = Row
-
-    local TrackCorner = Instance.new("UICorner")
-    TrackCorner.CornerRadius = UDim.new(1, 0)
-    TrackCorner.Parent = Track
-
-    local Knob = Instance.new("Frame")
-    Knob.Size = UDim2.new(0, 16, 0, 16)
-    Knob.Position = UDim2.new(0, 3, 0.5, -8)
-    Knob.BackgroundColor3 = Color3.fromRGB(120, 120, 150)
-    Knob.BorderSizePixel = 0
-    Knob.Parent = Track
-
-    local KnobCorner = Instance.new("UICorner")
-    KnobCorner.CornerRadius = UDim.new(1, 0)
-    KnobCorner.Parent = Knob
-
-    local Click = Instance.new("TextButton")
-    Click.Size = UDim2.new(1, 0, 1, 0)
-    Click.BackgroundTransparency = 1
-    Click.Text = ""
-    Click.Parent = Row
-
-    local function SetState(on)
-        if on then
-            TweenService:Create(Track, TweenInfo.new(0.18), {BackgroundColor3 = activeColor}):Play()
-            TweenService:Create(Knob, TweenInfo.new(0.18), {
-                Position = UDim2.new(0, 25, 0.5, -8),
-                BackgroundColor3 = Color3.fromRGB(255,255,255)
-            }):Play()
-            RowStroke.Color = activeColor
-            NameL.TextColor3 = Color3.fromRGB(255, 255, 255)
         else
-            TweenService:Create(Track, TweenInfo.new(0.18), {BackgroundColor3 = Color3.fromRGB(45,45,65)}):Play()
-            TweenService:Create(Knob, TweenInfo.new(0.18), {
-                Position = UDim2.new(0, 3, 0.5, -8),
-                BackgroundColor3 = Color3.fromRGB(120,120,150)
-            }):Play()
-            RowStroke.Color = Color3.fromRGB(40,40,65)
-            NameL.TextColor3 = Color3.fromRGB(190,190,210)
+            Toggles.cash = false
         end
-    end
+    end,
+})
 
-    return Click, SetState
-end
-
--- ══════════════════════════════════════════════════
--- STATUS BAR
--- ══════════════════════════════════════════════════
-local StatusLbl = Instance.new("TextLabel")
-StatusLbl.Size = UDim2.new(1, 0, 0, 22)
-StatusLbl.BackgroundTransparency = 1
-StatusLbl.Text = "✅ Simple Hub Ready"
-StatusLbl.TextColor3 = Color3.fromRGB(100, 220, 100)
-StatusLbl.TextSize = 11
-StatusLbl.Font = Enum.Font.Gotham
-StatusLbl.LayoutOrder = 99
-StatusLbl.Parent = Content
-
-local function SetStatus(msg, color)
-    StatusLbl.Text = msg
-    StatusLbl.TextColor3 = color or Color3.fromRGB(100,220,100)
-end
-
--- ══════════════════════════════════════════════════
--- SECTION: GENERAL
--- ══════════════════════════════════════════════════
-SectionLabel("▸ GENERAL", 0)
-
--- 1. Instant Cash
-local CashClick, CashSet = CreateToggleRow("💰", "Instant Cash", Color3.fromRGB(255,190,0), 1)
-CashClick.MouseButton1Click:Connect(function()
-    Toggles.cash = not Toggles.cash
-    CashSet(Toggles.cash)
-    if Toggles.cash then
-        SetStatus("💰 Auto Cash ON", Color3.fromRGB(255,190,0))
-        Connections.cash = task.spawn(function()
-            while Toggles.cash do
+-- Fast Train
+GeneralTab:CreateToggle({
+    Name = "⚡ Fast Train",
+    CurrentValue = false,
+    Flag = "FastTrain",
+    Callback = function(val)
+        Toggles.train = val
+        if val then
+            Connections.train = RunService.Heartbeat:Connect(function()
+                if not Toggles.train then return end
                 pcall(function()
-                    InvokeServerAction:InvokeServer("Win","Ended",1,999999,1)
+                    RequestServerAction:FireServer("Train","Increment",4,3)
                 end)
-                task.wait(2)
-            end
-        end)
-    else
-        Toggles.cash = false
-        SetStatus("💰 Auto Cash OFF", Color3.fromRGB(150,150,150))
-    end
-end)
-
--- 2. Fast Train
-local TrainClick, TrainSet = CreateToggleRow("⚡", "Fast Train", Color3.fromRGB(0,180,255), 2)
-TrainClick.MouseButton1Click:Connect(function()
-    Toggles.train = not Toggles.train
-    TrainSet(Toggles.train)
-    if Toggles.train then
-        SetStatus("⚡ Fast Train ON", Color3.fromRGB(0,180,255))
-        Connections.train = RunService.Heartbeat:Connect(function()
-            if not Toggles.train then return end
-            pcall(function()
-                RequestServerAction:FireServer("Train","Increment",4,3)
             end)
-        end)
-    else
-        if Connections.train then Connections.train:Disconnect() Connections.train = nil end
-        SetStatus("⚡ Fast Train OFF", Color3.fromRGB(150,150,150))
-    end
-end)
-
--- 3. Auto Rebirth
-local RebirthClick, RebirthSet = CreateToggleRow("🔄", "Auto Rebirth", Color3.fromRGB(160,80,255), 3)
-RebirthClick.MouseButton1Click:Connect(function()
-    Toggles.rebirth = not Toggles.rebirth
-    RebirthSet(Toggles.rebirth)
-    if Toggles.rebirth then
-        SetStatus("🔄 Auto Rebirth ON", Color3.fromRGB(160,80,255))
-        Connections.rebirth = task.spawn(function()
-            while Toggles.rebirth do
-                pcall(function()
-                    InvokeServerAction:InvokeServer("Rebirths","Request")
-                end)
-                task.wait(3)
-            end
-        end)
-    else
-        Toggles.rebirth = false
-        SetStatus("🔄 Auto Rebirth OFF", Color3.fromRGB(150,150,150))
-    end
-end)
-
--- ══════════════════════════════════════════════════
--- SECTION: EGGS
--- ══════════════════════════════════════════════════
-SectionLabel("▸ EGGS", 10)
-
--- 4. Auto Hatch Eggs
-local HatchClick, HatchSet = CreateToggleRow("🥚", "Auto Hatch Eggs", Color3.fromRGB(255,120,60), 11)
-HatchClick.MouseButton1Click:Connect(function()
-    Toggles.hatch = not Toggles.hatch
-    HatchSet(Toggles.hatch)
-    if Toggles.hatch then
-        SetStatus("🥚 Auto Hatch ON", Color3.fromRGB(255,120,60))
-        Connections.hatch = task.spawn(function()
-            while Toggles.hatch do
-                pcall(function()
-                    InvokeServerAction:InvokeServer("Eggs","RequestPurchase",{
-                        EggName = "Nut",
-                        PetsToAutoDelete = {},
-                        EggAmount = "max"
-                    })
-                end)
-                task.wait(1.5)
-            end
-        end)
-    else
-        Toggles.hatch = false
-        SetStatus("🥚 Auto Hatch OFF", Color3.fromRGB(150,150,150))
-    end
-end)
-
--- 5. Auto Claim Eggs Reward
-local EggRwdClick, EggRwdSet = CreateToggleRow("🎁", "Auto Claim Eggs Reward", Color3.fromRGB(255,80,150), 12)
-EggRwdClick.MouseButton1Click:Connect(function()
-    Toggles.eggrwd = not Toggles.eggrwd
-    EggRwdSet(Toggles.eggrwd)
-    if Toggles.eggrwd then
-        SetStatus("🎁 Egg Reward ON", Color3.fromRGB(255,80,150))
-        Connections.eggrwd = task.spawn(function()
-            while Toggles.eggrwd do
-                pcall(function()
-                    InvokeServerAction:InvokeServer("FreeReward","PlaytimeEgg")
-                end)
-                task.wait(4)
-            end
-        end)
-    else
-        Toggles.eggrwd = false
-        SetStatus("🎁 Egg Reward OFF", Color3.fromRGB(150,150,150))
-    end
-end)
-
--- ══════════════════════════════════════════════════
--- SECTION: PETS
--- ══════════════════════════════════════════════════
-SectionLabel("▸ PETS", 20)
-
--- 6. Auto Equip Best
-local EquipClick, EquipSet = CreateToggleRow("🏆", "Auto Equip Best", Color3.fromRGB(0,220,150), 21)
-EquipClick.MouseButton1Click:Connect(function()
-    Toggles.equip = not Toggles.equip
-    EquipSet(Toggles.equip)
-    if Toggles.equip then
-        SetStatus("🏆 Auto Equip ON", Color3.fromRGB(0,220,150))
-        Connections.equip = task.spawn(function()
-            while Toggles.equip do
-                pcall(function()
-                    InvokeServerAction:InvokeServer("Pets","EquipBest","EquipBest")
-                end)
-                task.wait(5)
-            end
-        end)
-    else
-        Toggles.equip = false
-        SetStatus("🏆 Auto Equip OFF", Color3.fromRGB(150,150,150))
-    end
-end)
-
--- 7. Auto Gold Pet
-local GoldClick, GoldSet = CreateToggleRow("✨", "Auto Gold Pet", Color3.fromRGB(255,215,0), 22)
-GoldClick.MouseButton1Click:Connect(function()
-    Toggles.gold = not Toggles.gold
-    GoldSet(Toggles.gold)
-    if Toggles.gold then
-        SetStatus("✨ Auto Gold Pet ON", Color3.fromRGB(255,215,0))
-        Connections.gold = task.spawn(function()
-            while Toggles.gold do
-                pcall(function()
-                    InvokeServerAction:InvokeServer("Pets","CraftAll")
-                    task.wait(0.5)
-                    InvokeServerAction:InvokeServer("Pets","GoldenRequest",{
-                        [1]="37a3d8dfffee45d98d3a522faef7a136",
-                        [2]="7b550470b26547a9ba67e83773900b25",
-                        [3]="0f1efdde44064da995efc4c3e37b63f9",
-                        [4]="ccbd3c000d85470b9f71cd715f1b3f9e",
-                        [5]="698679c62738493fa08c0e81eb526565"
-                    })
-                end)
-                task.wait(4)
-            end
-        end)
-    else
-        Toggles.gold = false
-        SetStatus("✨ Auto Gold OFF", Color3.fromRGB(150,150,150))
-    end
-end)
-
--- ══════════════════════════════════════════════════
--- SECTION: REWARDS
--- ══════════════════════════════════════════════════
-SectionLabel("▸ REWARDS", 30)
-
--- 8. Auto Claim Play Reward
-local PlayRwdClick, PlayRwdSet = CreateToggleRow("🎮", "Auto Claim Play Reward", Color3.fromRGB(80,200,255), 31)
-PlayRwdClick.MouseButton1Click:Connect(function()
-    Toggles.playrwd = not Toggles.playrwd
-    PlayRwdSet(Toggles.playrwd)
-    if Toggles.playrwd then
-        SetStatus("🎮 Play Reward ON", Color3.fromRGB(80,200,255))
-        Connections.playrwd = task.spawn(function()
-            while Toggles.playrwd do
-                pcall(function()
-                    InvokeServerAction:InvokeServer("FreeReward","PlaytimeEgg")
-                end)
-                task.wait(5)
-            end
-        end)
-    else
-        Toggles.playrwd = false
-        SetStatus("🎮 Play Reward OFF", Color3.fromRGB(150,150,150))
-    end
-end)
-
--- 9. Auto Spin
-local SpinClick, SpinSet = CreateToggleRow("🎡", "Auto Spin", Color3.fromRGB(200,100,255), 32)
-SpinClick.MouseButton1Click:Connect(function()
-    Toggles.spin = not Toggles.spin
-    SpinSet(Toggles.spin)
-    if Toggles.spin then
-        SetStatus("🎡 Auto Spin ON", Color3.fromRGB(200,100,255))
-        Connections.spin = task.spawn(function()
-            while Toggles.spin do
-                pcall(function()
-                    InvokeServerAction:InvokeServer("SpinWheel","Request")
-                end)
-                task.wait(2)
-            end
-        end)
-    else
-        Toggles.spin = false
-        SetStatus("🎡 Auto Spin OFF", Color3.fromRGB(150,150,150))
-    end
-end)
-
--- ══════════════════════════════════════════════════
--- HIDE / SHOW via DragBtn tap
--- ══════════════════════════════════════════════════
-local guiOpen = true
-local tapping = false
-local tapStart = 0
-
-DragBtn.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.Touch or
-       input.UserInputType == Enum.UserInputType.MouseButton1 then
-        tapping = true
-        tapStart = tick()
-    end
-end)
-
-DragBtn.InputEnded:Connect(function(input)
-    if (input.UserInputType == Enum.UserInputType.Touch or
-        input.UserInputType == Enum.UserInputType.MouseButton1)
-       and tapping and (tick() - tapStart) < 0.25 then
-        guiOpen = not guiOpen
-        if guiOpen then
-            Main.Visible = true
-            Main.Size = UDim2.new(0, 0, 0, 0)
-            TweenService:Create(Main, TweenInfo.new(0.25, Enum.EasingStyle.Back), {
-                Size = UDim2.new(0, 280, 0, 530)
-            }):Play()
-            DragBtn.Text = "☰"
         else
-            TweenService:Create(Main, TweenInfo.new(0.2), {
-                Size = UDim2.new(0, 0, 0, 0)
-            }):Play()
-            task.delay(0.2, function() Main.Visible = false end)
-            DragBtn.Text = "👁"
+            if Connections.train then
+                Connections.train:Disconnect()
+                Connections.train = nil
+            end
         end
-    end
-    tapping = false
-end)
+    end,
+})
 
-SetStatus("✅ Simple Hub v3 Ready!")
-print("[Simple Hub] Loaded successfully!")
+-- Auto Rebirth
+GeneralTab:CreateToggle({
+    Name = "🔄 Auto Rebirth",
+    CurrentValue = false,
+    Flag = "AutoRebirth",
+    Callback = function(val)
+        Toggles.rebirth = val
+        if val then
+            Connections.rebirth = task.spawn(function()
+                while Toggles.rebirth do
+                    pcall(function()
+                        InvokeServerAction:InvokeServer("Rebirths","Request")
+                    end)
+                    task.wait(3)
+                end
+            end)
+        else
+            Toggles.rebirth = false
+        end
+    end,
+})
+
+-- ══════════════════════════
+-- TAB: EGGS
+-- ══════════════════════════
+local EggsTab = Window:CreateTab("Eggs", "egg")
+
+EggsTab:CreateSection("Egg Features")
+
+-- Auto Hatch Eggs
+EggsTab:CreateToggle({
+    Name = "🥚 Auto Hatch Eggs",
+    CurrentValue = false,
+    Flag = "AutoHatch",
+    Callback = function(val)
+        Toggles.hatch = val
+        if val then
+            Connections.hatch = task.spawn(function()
+                while Toggles.hatch do
+                    pcall(function()
+                        InvokeServerAction:InvokeServer("Eggs","RequestPurchase",{
+                            EggName = "Nut",
+                            PetsToAutoDelete = {},
+                            EggAmount = "max"
+                        })
+                    end)
+                    task.wait(1.5)
+                end
+            end)
+        else
+            Toggles.hatch = false
+        end
+    end,
+})
+
+-- Auto Claim Eggs Reward
+EggsTab:CreateToggle({
+    Name = "🎁 Auto Claim Eggs Reward",
+    CurrentValue = false,
+    Flag = "AutoEggRwd",
+    Callback = function(val)
+        Toggles.eggrwd = val
+        if val then
+            Connections.eggrwd = task.spawn(function()
+                while Toggles.eggrwd do
+                    pcall(function()
+                        InvokeServerAction:InvokeServer("FreeReward","PlaytimeEgg")
+                    end)
+                    task.wait(4)
+                end
+            end)
+        else
+            Toggles.eggrwd = false
+        end
+    end,
+})
+
+-- ══════════════════════════
+-- TAB: PETS
+-- ══════════════════════════
+local PetsTab = Window:CreateTab("Pets", "heart")
+
+PetsTab:CreateSection("Pet Features")
+
+-- Auto Equip Best
+PetsTab:CreateToggle({
+    Name = "🏆 Auto Equip Best",
+    CurrentValue = false,
+    Flag = "AutoEquip",
+    Callback = function(val)
+        Toggles.equip = val
+        if val then
+            Connections.equip = task.spawn(function()
+                while Toggles.equip do
+                    pcall(function()
+                        InvokeServerAction:InvokeServer("Pets","EquipBest","EquipBest")
+                    end)
+                    task.wait(5)
+                end
+            end)
+        else
+            Toggles.equip = false
+        end
+    end,
+})
+
+-- Auto Gold Pet
+PetsTab:CreateToggle({
+    Name = "✨ Auto Gold Pet",
+    CurrentValue = false,
+    Flag = "AutoGold",
+    Callback = function(val)
+        Toggles.gold = val
+        if val then
+            Connections.gold = task.spawn(function()
+                while Toggles.gold do
+                    pcall(function()
+                        InvokeServerAction:InvokeServer("Pets","CraftAll")
+                        task.wait(0.5)
+                        InvokeServerAction:InvokeServer("Pets","GoldenRequest",{
+                            [1]="37a3d8dfffee45d98d3a522faef7a136",
+                            [2]="7b550470b26547a9ba67e83773900b25",
+                            [3]="0f1efdde44064da995efc4c3e37b63f9",
+                            [4]="ccbd3c000d85470b9f71cd715f1b3f9e",
+                            [5]="698679c62738493fa08c0e81eb526565"
+                        })
+                    end)
+                    task.wait(4)
+                end
+            end)
+        else
+            Toggles.gold = false
+        end
+    end,
+})
+
+-- ══════════════════════════
+-- TAB: REWARDS
+-- ══════════════════════════
+local RewardsTab = Window:CreateTab("Rewards", "gift")
+
+RewardsTab:CreateSection("Reward Features")
+
+-- Auto Claim Play Reward
+RewardsTab:CreateToggle({
+    Name = "🎮 Auto Claim Play Reward",
+    CurrentValue = false,
+    Flag = "AutoPlayRwd",
+    Callback = function(val)
+        Toggles.playrwd = val
+        if val then
+            Connections.playrwd = task.spawn(function()
+                while Toggles.playrwd do
+                    pcall(function()
+                        InvokeServerAction:InvokeServer("FreeReward","PlaytimeEgg")
+                    end)
+                    task.wait(5)
+                end
+            end)
+        else
+            Toggles.playrwd = false
+        end
+    end,
+})
+
+-- Auto Spin
+RewardsTab:CreateToggle({
+    Name = "🎡 Auto Spin",
+    CurrentValue = false,
+    Flag = "AutoSpin",
+    Callback = function(val)
+        Toggles.spin = val
+        if val then
+            Connections.spin = task.spawn(function()
+                while Toggles.spin do
+                    pcall(function()
+                        InvokeServerAction:InvokeServer("SpinWheel","Request")
+                    end)
+                    task.wait(2)
+                end
+            end)
+        else
+            Toggles.spin = false
+        end
+    end,
+})
+
+-- Notif selesai load
+Rayfield:Notify({
+    Title = "Simple Hub",
+    Content = "Script berhasil di-load! 🏀",
+    Duration = 4,
+    Image = "check",
+})
