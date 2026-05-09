@@ -1,4 +1,4 @@
--- Simple Hub | Baseball Training
+-- Simple Hub | Baseball Training (Updated)
 -- Rayfield Edition
 
 local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
@@ -10,17 +10,60 @@ local RunService = game:GetService("RunService")
 local Player = Players.LocalPlayer
 local UserId = Player.UserId
 
--- Remote Events
-local FinishThrow = ReplicatedStorage:WaitForChild("Modules"):WaitForChild("FinishThrow"):WaitForChild("FinishThrow")
-local MakeRebirth = ReplicatedStorage:WaitForChild("Modules"):WaitForChild("MakeRebirth"):WaitForChild("MakeRebirth")
-local ReportExercise = ReplicatedStorage:WaitForChild("Modules"):WaitForChild("ReportExerciseResult"):WaitForChild("ReportExerciseResult")
+-- Remotes
+local Modules = ReplicatedStorage:WaitForChild("Modules")
+local ReportExercise = Modules:WaitForChild("ReportExerciseResult"):WaitForChild("ReportExerciseResult")
+local StartThrow    = Modules:WaitForChild("StartThrow"):WaitForChild("StartThrow")
+local FinishThrow   = Modules:WaitForChild("FinishThrow"):WaitForChild("FinishThrow")
+local MakeRebirth   = Modules:WaitForChild("MakeRebirth"):WaitForChild("MakeRebirth")
 
 local Toggles = {
-    cash = false,
-    train = false,
+    cash    = false,
+    train   = false,
     rebirth = false,
 }
 local Connections = {}
+
+-- Exercise list (1-9)
+local Exercises = {
+    "exercise_1_world_1",
+    "exercise_2_world_1",
+    "exercise_3_world_1",
+    "exercise_4_world_1",
+    "exercise_5_world_1",
+    "exercise_6_world_1",
+    "exercise_7_world_1",
+    "exercise_8_world_1",
+    "exercise_9_world_1",
+}
+
+-- Full throw sequence (untuk instant cash)
+local function DoFullThrow()
+    -- Exercise 1-9
+    for _, exId in ipairs(Exercises) do
+        pcall(function()
+            ReportExercise:InvokeServer({
+                userId = UserId,
+                exerciseId = exId
+            })
+        end)
+        task.wait(0.1)
+    end
+    -- Start Throw
+    pcall(function()
+        StartThrow:InvokeServer({
+            useVip = false,
+            worldId = "world_1",
+            userId = UserId,
+            flightStartedAt = os.clock()
+        })
+    end)
+    task.wait(0.2)
+    -- Finish Throw
+    pcall(function()
+        FinishThrow:InvokeServer({ userId = UserId })
+    end)
+end
 
 -- ══════════════════════════
 -- WINDOW
@@ -41,7 +84,7 @@ local MainTab = Window:CreateTab("Main", "star")
 
 MainTab:CreateSection("General Features")
 
--- Instant Cash
+-- Instant Cash (full sequence)
 MainTab:CreateToggle({
     Name = "💰 Instant Cash",
     CurrentValue = false,
@@ -51,10 +94,8 @@ MainTab:CreateToggle({
         if val then
             Connections.cash = task.spawn(function()
                 while Toggles.cash do
-                    pcall(function()
-                        FinishThrow:InvokeServer({ userId = UserId })
-                    end)
-                    task.wait(1)
+                    DoFullThrow()
+                    task.wait(1.5)
                 end
             end)
         else
@@ -63,7 +104,7 @@ MainTab:CreateToggle({
     end,
 })
 
--- Fast Train
+-- Fast Train (fire semua exercise loop)
 MainTab:CreateToggle({
     Name = "⚡ Fast Train",
     CurrentValue = false,
@@ -71,20 +112,23 @@ MainTab:CreateToggle({
     Callback = function(val)
         Toggles.train = val
         if val then
-            Connections.train = RunService.Heartbeat:Connect(function()
-                if not Toggles.train then return end
-                pcall(function()
-                    ReportExercise:InvokeServer({
-                        userId = UserId,
-                        exerciseId = "exercise_3_world_1"
-                    })
-                end)
+            Connections.train = task.spawn(function()
+                while Toggles.train do
+                    for _, exId in ipairs(Exercises) do
+                        if not Toggles.train then break end
+                        pcall(function()
+                            ReportExercise:InvokeServer({
+                                userId = UserId,
+                                exerciseId = exId
+                            })
+                        end)
+                        task.wait(0.05)
+                    end
+                    task.wait(0.3)
+                end
             end)
         else
-            if Connections.train then
-                Connections.train:Disconnect()
-                Connections.train = nil
-            end
+            Toggles.train = false
         end
     end,
 })
